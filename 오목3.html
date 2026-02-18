@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오목 게임</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        /* 메뉴 스타일 */
+        .menu {
+            background: linear-gradient(135deg, #fff5e1 0%, #ffe8cc 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+        }
+
+        .menu h1 {
+            color: #d63031;
+            margin-bottom: 30px;
+            font-size: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu p {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+        }
+
+        .color-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-btn.black {
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+        }
+
+        .color-btn.white {
+            background: linear-gradient(135deg, #f1f2f6 0%, #dfe6e9 100%);
+            color: #333;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #55efc4 0%, #00b894 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 게임 스타일 */
+        .game {
+            display: none;
+            background: linear-gradient(135deg, #fff5e1 0%, #ffe8cc 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .game.active {
+            display: block;
+        }
+
+        .game h2 {
+            color: #d63031;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .info-box {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box h3 {
+            color: #636e72;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .info-box p {
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .board-container {
+            display: inline-block;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #f4a460 0%, #daa520 100%);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        canvas {
+            display: block;
+            background: #fff8dc;
+            border-radius: 5px;
+            cursor: crosshair;
+            border: 3px solid #8b6914;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .message {
+            color: #d63031;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            min-height: 25px;
+        }
+
+        .selected {
+            background: #ffeaa7 !important;
+            box-shadow: 0 0 10px rgba(212, 48, 48, 0.5) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 메뉴 -->
+        <div class="menu" id="menu">
+            <h1>⚫⚪ 오목 게임 ⚪⚫</h1>
+            <p>게임 시작하기</p>
+            <p style="font-size: 14px; margin-bottom: 30px;">당신의 돌을 선택하세요</p>
+            
+            <div class="button-group">
+                <button class="color-btn black" onclick="selectColor('black')">⚫ 흑돌</button>
+                <button class="color-btn white" onclick="selectColor('white')">⚪ 백돌</button>
+            </div>
+            
+            <button class="start-btn" id="startBtn" onclick="startGame()" disabled>게임 시작</button>
+        </div>
+
+        <!-- 게임 화면 -->
+        <div class="game" id="game">
+            <h2>⚫⚪ 오목 게임 ⚪⚫</h2>
+            
+            <div class="game-info">
+                <div class="info-box">
+                    <h3>당신의 돌</h3>
+                    <p id="playerColor">-</p>
+                </div>
+                <div class="info-box">
+                    <h3>현재 차례</h3>
+                    <p id="turn">-</p>
+                </div>
+                <div class="info-box">
+                    <h3>게임 상태</h3>
+                    <p id="status">진행 중...</p>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <canvas id="gameCanvas" width="450" height="450"></canvas>
+            </div>
+
+            <div class="message" id="message"></div>
+
+            <div class="game-controls">
+                <button class="reset-btn" onclick="resetGame()">처음부터</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BOARD_SIZE = 15;
+        const CELL_SIZE = 30;
+        const PADDING = 15;
+        const LINE_WIDTH = 1;
+        const STONE_RADIUS = 14;
+
+        let canvas, ctx;
+        let board = [];
+        let playerColor = null;
+        let aiColor = null;
+        let currentTurn = 'black'; // 흑돌이 먼저
+        let gameActive = true;
+
+        // 색상 선택
+        function selectColor(color) {
+            playerColor = color;
+            aiColor = color === 'black' ? 'white' : 'black';
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        // 게임 시작
+        function startGame() {
+            if (!playerColor) return;
+
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game').classList.add('active');
+            
+            initializeBoard();
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            updateDisplay();
+            drawBoard();
+
+            canvas.addEventListener('click', handleCanvasClick);
+
+            // 백돌을 선택한 경우 AI가 먼저 시작
+            if (playerColor === 'white') {
+                showMessage('AI가 먼저 둡니다...');
+                setTimeout(() => {
+                    makeAIMove();
+                    drawBoard();
+                    currentTurn = playerColor;
+                    updateDisplay();
+                }, 1000);
+            }
+        }
+
+        // 보드 초기화
+        function initializeBoard() {
+            board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+            currentTurn = 'black';
+            gameActive = true;
+        }
+
+        // 캔버스 클릭 처리
+        function handleCanvasClick(event) {
+            if (!gameActive || currentTurn !== playerColor) {
+                showMessage('AI의 차례입니다. 잠시만 기다려주세요.');
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const col = Math.round((x - PADDING) / CELL_SIZE);
+            const row = Math.round((y - PADDING) / CELL_SIZE);
+
+            if (isValidMove(row, col)) {
+                makeMove(row, col, playerColor);
+                drawBoard();
+
+                // 게임 종료 확인
+                if (checkWin(row, col, playerColor)) {
+                    endGame(`축하합니다! ${playerColor === 'black' ? '흑돌' : '백돌'}이(가) 이겼습니다!`);
+                    return;
+                }
+
+                currentTurn = aiColor;
+                updateDisplay();
+
+                // AI의 차례
+                setTimeout(() => {
+                    makeAIMove();
+                    drawBoard();
+
+                    if (checkWin(lastAIMoveRow, lastAIMoveCol, aiColor)) {
+                        endGame(`게임 오버! AI가 이겼습니다.`);
+                        return;
+                    }
+
+                    currentTurn = playerColor;
+                    updateDisplay();
+                }, 500);
+            } else {
+                showMessage('이미 돌이 있거나 유효하지 않은 위치입니다.');
+            }
+        }
+
+        let lastAIMoveRow, lastAIMoveCol;
+
+        // AI 움직임
+        function makeAIMove() {
+            let bestScore = -Infinity;
+            let bestMove = null;
+
+            // 기존 돌 근처에서만 탐색 (성능 최적화)
+            const candidates = getCandidateMoves();
+
+            for (let [row, col] of candidates) {
+                if (!isValidMove(row, col)) continue;
+
+                let score = 0;
+
+                // 공격 점수 계산
+                score += evaluatePosition(row, col, aiColor) * 3;
+
+                // 방어 점수 계산
+                score += evaluatePosition(row, col, playerColor) * 2;
+
+                // 약간의 랜덤성 추가 (AI가 실수하도록)
+                score += Math.random() * 50;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = [row, col];
+                }
+            }
+
+            // 최고의 수를 찾지 못한 경우 랜덤 선택
+            if (!bestMove) {
+                let found = false;
+                for (let i = 0; i < 100; i++) {
+                    const row = Math.floor(Math.random() * BOARD_SIZE);
+                    const col = Math.floor(Math.random() * BOARD_SIZE);
+                    if (isValidMove(row, col)) {
+                        bestMove = [row, col];
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (bestMove) {
+                makeMove(bestMove[0], bestMove[1], aiColor);
+                lastAIMoveRow = bestMove[0];
+                lastAIMoveCol = bestMove[1];
+            }
+        }
+
+        // 후보 위치 생성
+        function getCandidateMoves() {
+            const candidates = [];
+            const range = 2;
+
+            // 보드가 비어있으면 중앙에서 시작
+            let hasStones = false;
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] !== null) {
+                        hasStones = true;
+                        break;
+                    }
+                }
+                if (hasStones) break;
+            }
+
+            if (!hasStones) {
+                // 첫 수는 중앙에 두기
+                return [[7, 7]];
+            }
+
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] !== null) {
+                        for (let dr = -range; dr <= range; dr++) {
+                            for (let dc = -range; dc <= range; dc++) {
+                                const nr = row + dr;
+                                const nc = col + dc;
+                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                                    if (board[nr][nc] === null) {
+                                        candidates.push([nr, nc]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 중복 제거
+            return [...new Set(candidates.map(c => JSON.stringify(c)))].map(c => JSON.parse(c));
+        }
+
+        // 위치 평가
+        function evaluatePosition(row, col, color) {
+            let score = 0;
+            const directions = [
+                [0, 1], // 가로
+                [1, 0], // 세로
+                [1, 1], // 대각선
+                [1, -1] // 역대각선
+            ];
+
+            for (let [dr, dc] of directions) {
+                let count = 1;
+                
+                // 한 방향으로 확인
+                for (let i = 1; i < 5; i++) {
+                    const r = row + dr * i;
+                    const c = col + dc * i;
+                    if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === color) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                // 반대 방향으로 확인
+                for (let i = 1; i < 5; i++) {
+                    const r = row - dr * i;
+                    const c = col - dc * i;
+                    if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === color) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                // 점수 매기기
+                if (count >= 4) score += 100;
+                else if (count === 3) score += 50;
+                else if (count === 2) score += 10;
+                else score += 1;
+            }
+
+            return score;
+        }
+
+        // 유효한 이동 확인
+        function isValidMove(row, col) {
+            if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
+                return false;
+            }
+            return board[row][col] === null;
+        }
+
+        // 돌 놓기
+        function makeMove(row, col, color) {
+            board[row][col] = color;
+        }
+
+        // 5개 연결 확인 (승리 조건)
+        function checkWin(row, col, color) {
+            const directions = [
+                [0, 1], // 가로
+                [1, 0], // 세로
+                [1, 1], // 대각선
+                [1, -1] // 역대각선
+            ];
+
+            for (let [dr, dc] of directions) {
+                let count = 1;
+
+                // 한 방향으로 확인
+                for (let i = 1; i < 5; i++) {
+                    const r = row + dr * i;
+                    const c = col + dc * i;
+                    if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === color) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                // 반대 방향으로 확인
+                for (let i = 1; i < 5; i++) {
+                    const r = row - dr * i;
+                    const c = col - dc * i;
+                    if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === color) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (count >= 5) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // 보드 그리기
+        function drawBoard() {
+            // 배경
+            ctx.fillStyle = '#fff8dc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 격자
+            ctx.strokeStyle = '#8b6914';
+            ctx.lineWidth = LINE_WIDTH;
+
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                // 가로선
+                ctx.beginPath();
+                ctx.moveTo(PADDING, PADDING + i * CELL_SIZE);
+                ctx.lineTo(PADDING + (BOARD_SIZE - 1) * CELL_SIZE, PADDING + i * CELL_SIZE);
+                ctx.stroke();
+
+                // 세로선
+                ctx.beginPath();
+                ctx.moveTo(PADDING + i * CELL_SIZE, PADDING);
+                ctx.lineTo(PADDING + i * CELL_SIZE, PADDING + (BOARD_SIZE - 1) * CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // 별표 (handicap points)
+            ctx.fillStyle = '#8b6914';
+            const starPoints = [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]];
+            for (let [r, c] of starPoints) {
+                ctx.beginPath();
+                ctx.arc(PADDING + c * CELL_SIZE, PADDING + r * CELL_SIZE, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 돌 그리기
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] !== null) {
+                        drawStone(row, col, board[row][col]);
+                    }
+                }
+            }
+        }
+
+        // 돌 그리기
+        function drawStone(row, col, color) {
+            const x = PADDING + col * CELL_SIZE;
+            const y = PADDING + row * CELL_SIZE;
+
+            // 그림자 효과
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            ctx.fillStyle = color === 'black' ? '#1a1a1a' : '#f5f5f5';
+            ctx.beginPath();
+            ctx.arc(x, y, STONE_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 테두리
+            ctx.shadowColor = 'transparent';
+            ctx.strokeStyle = color === 'black' ? '#000' : '#999';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        // 디스플레이 업데이트
+        function updateDisplay() {
+            document.getElementById('playerColor').textContent = playerColor === 'black' ? '⚫ 흑돌' : '⚪ 백돌';
+            document.getElementById('turn').textContent = currentTurn === 'black' ? '⚫ 흑돌' : '⚪ 백돌';
+            document.getElementById('status').textContent = gameActive ? '진행 중...' : '게임 종료';
+        }
+
+        // 메시지 표시
+        function showMessage(msg) {
+            document.getElementById('message').textContent = msg;
+            setTimeout(() => {
+                document.getElementById('message').textContent = '';
+            }, 3000);
+        }
+
+        // 게임 종료
+        function endGame(msg) {
+            gameActive = false;
+            document.getElementById('status').textContent = '게임 종료!';
+            showMessage(msg);
+            updateDisplay();
+        }
+
+        // 게임 리셋
+        function resetGame() {
+            document.getElementById('game').classList.remove('active');
+            document.getElementById('menu').style.display = 'block';
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById('startBtn').disabled = true;
+            playerColor = null;
+            aiColor = null;
+            gameActive = false;
+            board = [];
+        }
+    </script>
+</body>
+</html>
